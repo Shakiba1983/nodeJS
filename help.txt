@@ -11,3 +11,7 @@ git push
 برای دریافت آخرین تغییرات از GitHub (مثلاً روی سیستم دوم):
 
 git pull
+
+
+git add .
+git commit -m "توضیح تغییرات جدید"
