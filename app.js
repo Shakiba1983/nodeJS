@@ -2,10 +2,15 @@ const express = require("express");
 require("dotenv").config();
 const app = express();
 app.use(express.json());
-// app.get()
-// app.post()
-// app.put()
-// app.delete()
+
+app.use(function(req , res , next ){
+  console.log("logging...")
+  next()
+})
+app.use((req , res , next )=>{
+  console.log("authentication...")
+  next()
+})
 const courses = [
   { id: 1, name: "html" },
   { id: 2, name: "css" },
