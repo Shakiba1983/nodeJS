@@ -1,74 +1,34 @@
-const logger = require("./logger")
+const logger = require("./middlewares/logger")
 const authentication = require("./authentication")
 const express = require("express");
 const morgan = require("morgan");
 const helmet = require("helmet");
+const  coursesRuter = require ('./routes/courses-route')
+const  homeRoute = require('./routes/home-route')
+const userRoute = require("./routes/user-route")
 
 require("dotenv").config();
 const app = express();
-app.use(express.json());
-app.use(express.static('public'))
-app.use(logger)
-app.use(authentication)
-app.use(helmet());
-app.use(morgan("tiny"));
+app.use(helmet());    // امنیت
+app.use(express.json());     // JSON body
+app.use(express.urlencoded({ extended: true }));    // form body
 
+if (app.get("env") === "development") {
+  app.use(morgan("tiny"));          // لاگ ویژه dev
+}
+app.use(logger)             // لاگر شخصی
+app.use(authentication)           // auth
 
-app.use(express.urlencoded({ extended: true }));
+const startupDebug = require ("debug")("startup")
+const dbDebug = require ("debug")("db")
+// app.use(express.static('public'))
 
-const courses = [
-  { id: 1, name: "html" },
-  { id: 2, name: "css" },
-  { id: 3, name: "javascript" },
-];
+// مهم برای لاگ کردن در حالت دولوپر
+ startupDebug("hello from startup debug")   // برای اینکه در ویندوز لاگ ها را نمایش بده باید از دستور $env:DEBUG="startup,db"; nodemon app 
 
-app.get("/", (req, res) => {
-  res.send("home page");
-});
-
-app.get("/api/courses", (req, res) => {
-  res.send(["html", "css", "java"]);
-});
-
-app.get("/api/courses/:id", (req, res) => {
-  const course = courses.find((c) => c.id === parseInt(req.params.id));
-  if (!course) return res.status(404).send("course with given id not found  ");
-  res.send([course]);
-});
-
-app.get("/api/courses/:id/:name", (req, res) => {
-  res.send([req.params.id, req.params.name]);
-});
-
-app.post("/api/courses", (req, res) => {
-  if (!req.body.name || req.body.name.length < 3) {
-    res.status(400).send("name is required");
-    return;
-  }
-  const course = {
-    id: courses.length + 1,
-    name: req.body.name,
-  };
-  courses.push(course);
-  res.send(course);
-});
-
-app.put("/api/courses/:id", (req, res) => {
-  const course = courses.find(c => c.id === parseInt(req.params.id));
-  if (!course) return res.status(404).send("course with given id not found  ");
-  if (!req.body.name || req.body.name.length < 3)
-    return res.status(400).send("name is required and more than 3 characher");
-course.name = req.body.name;
-res.send(course);
-});
-
-app.delete("/api/courses/:id", (req, res) => {
-    const course = courses.find(c => c.id === parseInt(req.params.id));
-    if (!course) return res.status(404).send("Course with given id not found");
-  const index   = courses.indexOf(course);
-  courses.splice(index ,1);
-  res.send(course);
-} )
+app.use('/api/courses' , coursesRuter)
+app.use('/api/users' , userRoute)
+app.use("/", homeRoute );
 
 const port = process.env.APP_PORT || 3000;
 app.listen(port, () => {
